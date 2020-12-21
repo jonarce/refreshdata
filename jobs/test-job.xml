@@ -1,0 +1,11 @@
+<job>
+	<common>
+		<job-name>Test Job</job-name>
+	</common>
+	<source type='file'>
+
+	</source>
+	<target type='database'>
+
+	</target>
+</job>
