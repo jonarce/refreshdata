@@ -1,11 +1,28 @@
 <job>
-	<common>
+	<common type="upload">
 		<job-name>Test Job</job-name>
 	</common>
 	<source type='file'>
-
+		<file-name>/home/jon/DEV/workspace/TravellerAdm/suppliers_data/Agoda/hotels/E342B777-64FD-4A49-9C9F-FEF4BA635863_EN.csv</file-name>
+		<field-names></field-names>
+		<read-from-line>2</read-from-line>
+		<encoding>utf-8-sig</encoding>
+		<new-line>\n</new-line>
+		<delimiter>,</delimiter>
+		<quote-char>"</quote-char>
+		<dialect>unix</dialect>
 	</source>
 	<target type='database'>
-
+		<engine>Postgres</engine>
+		<server>localhost</server>
+		<port>5432</port>
+		<database>traveller</database>
+		<user>postgres</user>
+		<password>Pass@word1</password>
+		<schema>suppliers</schema>
+		<table>hotels_agoda</table>
+		<timestamp>timestamp</timestamp>
+		<check-exists-sql>SELECT Count(*) as amt FROM suppliers.hotels_agoda WHERE hotel_id = {hotel_id};</check-exists-sql>
+		<after-import-sql>SELECT * FROM suppliers.hotels_agoda;</after-import-sql>
 	</target>
 </job>
