@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # pip3 install csv
 """refreshdata.py: Refresh Data in a system from any given source (database, csv, xml file)."""
+from gi.types import nothing
 
 __author__      = "Jon Arce"
 __copyright_    = "Copyright 2020"
@@ -22,11 +23,19 @@ from posix import getcwd
 import xmltodict
 import xml.etree.ElementTree as xml
 import csv
+from string import Template
 # Database: Postgres
 import psycopg2
 
+# Function to substitute placeholders for actual values commming from the source
+def replace_vals(str_template, vals):
+    t= Template(str_template)
+    return t.substitute(vals)
+
+
 if __name__ == '__main__':
     now = datetime.datetime.now()
+    lines = 0
     print("Starting job ..." + str(now))
     # Print arguments one by one
     job_file = str(sys.argv[1])
@@ -58,20 +67,23 @@ if __name__ == '__main__':
         database=job_doc['job']['target']['database'],
         user=job_doc['job']['target']['user'],
         password=job_doc['job']['target']['password'])
-        
-        source_reader = csv.DictReader(open(job_doc['job']['source']['file-name'], 'r',encoding='utf-8-sig'),
-                                            dialect='unix',
+        file_name = job_doc['job']['source']['file-name']
+        file_encoding = job_doc['job']['source']['encoding']
+        file_dialect = job_doc['job']['source']['dialect']
+        file_delimiter = job_doc['job']['source']['delimiter']
+        file_quotechar = job_doc['job']['source']['quote-char']
+        source_reader = csv.DictReader(open(file_name, "rt", encoding = file_encoding),
+                                            dialect = file_dialect,
                                             # fieldnames=job_doc['job']['source']['headers'],
-                                            delimiter=',', quotechar='"')
-        #                                delimiter=job_doc['job']['source']['delimiter'],
-        #                                quotechar=job_doc['job']['source']['quote-char'])
-        i = 0
+                                            #delimiter=',', quotechar='"')
+                                        delimiter = file_delimiter,
+                                        quotechar = file_quotechar
+                                        )
         for data_row in source_reader:
             # check if record exists
-            if i != 0:
-                print(data_row)
-                print(data_row['hotel_id'])
-            i += 1
+            print(data_row)
+            print(replace_vals(job_doc['job']['target']['check-exists-sql'], data_row))
+            lines += 1
             # print(', '.join(data_row))
             # replace_with_values(check_exists_sql, data_row);
 
@@ -79,8 +91,7 @@ if __name__ == '__main__':
     
     # print end of job
     now = datetime.datetime.now()
-    print("   ending job..."+str(now))
-    
+    print("   ending job..."+str(now)+'lines:'+str(lines))    
     # close database
     conn.close()
     

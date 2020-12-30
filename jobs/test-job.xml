@@ -22,7 +22,7 @@
 		<schema>suppliers</schema>
 		<table>hotels_agoda</table>
 		<timestamp>timestamp</timestamp>
-		<check-exists-sql>SELECT Count(*) as amt FROM suppliers.hotels_agoda WHERE hotel_id = {hotel_id};</check-exists-sql>
+		<check-exists-sql>SELECT hotel_id FROM suppliers.hotels_agoda WHERE hotel_id = ${hotel_id};</check-exists-sql>
 		<after-import-sql>SELECT * FROM suppliers.hotels_agoda;</after-import-sql>
 	</target>
 </job>
