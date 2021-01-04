@@ -2,6 +2,8 @@
 # pip3 install csv
 """refreshdata.py: Refresh Data in a system from any given source (database, csv, xml file)."""
 from gi.types import nothing
+from orca import input_event
+from zim import datetimetz
 
 __author__      = "Jon Arce"
 __copyright_    = "Copyright 2020"
@@ -13,7 +15,7 @@ __email__       = "jon.arce@gmail.com"
 __status__      = "Production"
 
 # DEPENDENCIES:
-#   pip3 installl xmltodict
+#   pip3 install xmltodict
 #
 
 import sys
@@ -29,8 +31,26 @@ import psycopg2
 
 # Function to substitute placeholders for actual values commming from the source
 def replace_vals(str_template, vals):
-    t= Template(str_template)
+    # escape any required SQL character
+    for key, value in vals.items():
+        # set empty values to NONE
+        if empty(value):
+            vals[key] = 'NULL'
+        # escape required SQL characters in strings
+        elif isinstance(value, str):
+            vals[key] = value.replace('\'', '\"')
+    t=Template(str_template)
     return t.substitute(vals)
+
+# Check if variable is empty
+def empty(value):
+    if isinstance(value, datetime.datetime):
+        return False
+    else:
+        if not value:
+           return True
+        else:
+           return False
 
 
 if __name__ == '__main__':
@@ -67,11 +87,15 @@ if __name__ == '__main__':
         database=job_doc['job']['target']['database'],
         user=job_doc['job']['target']['user'],
         password=job_doc['job']['target']['password'])
+        cur = conn.cursor()
+        
+        # file reader settings
         file_name = job_doc['job']['source']['file-name']
         file_encoding = job_doc['job']['source']['encoding']
         file_dialect = job_doc['job']['source']['dialect']
         file_delimiter = job_doc['job']['source']['delimiter']
         file_quotechar = job_doc['job']['source']['quote-char']
+        # open as a dictionary
         source_reader = csv.DictReader(open(file_name, "rt", encoding = file_encoding),
                                             dialect = file_dialect,
                                             # fieldnames=job_doc['job']['source']['headers'],
@@ -79,19 +103,44 @@ if __name__ == '__main__':
                                         delimiter = file_delimiter,
                                         quotechar = file_quotechar
                                         )
+        check_exists_sql = job_doc['job']['target']['check-exists-sql']
+        insert_sql = job_doc['job']['target']['insert-sql']
+        update_sql = job_doc['job']['target']['update-sql']
+        
+        timestamp = datetime.datetime.now()
+        timestamp_field = job_doc['job']['target']['timestamp']
+        
         for data_row in source_reader:
+            # add timestamp to row of data
+            data_row[timestamp_field] = timestamp
+            print(lines+1, ":", end="")
+            
             # check if record exists
-            print(data_row)
-            print(replace_vals(job_doc['job']['target']['check-exists-sql'], data_row))
-            lines += 1
-            # print(', '.join(data_row))
-            # replace_with_values(check_exists_sql, data_row);
+            check_sql_query = replace_vals(check_exists_sql, data_row)
+            cur.execute(check_sql_query)
+            check_records = cur.fetchall()
+            
+            # if record exists then UPDATE
+            if (cur.rowcount):
+                print(' UPDATE ', end="")
+                sql_query = replace_vals(update_sql, data_row)
+            # if new record then INSERT
+            else:
+                print(' INSERT ', end="")
+                sql_query = replace_vals(insert_sql, data_row)
+            
+            # print('SQL Query: ',sql_query)
+            cur.execute(sql_query)
+            conn.commit()
 
-            # open target
-    
+            lines += 1
+            print([(k, data_row[k]) for k in data_row])
+            # input("Press Enter to continue...")
+            
     # print end of job
     now = datetime.datetime.now()
-    print("   ending job..."+str(now)+'lines:'+str(lines))    
+    print('   ending job...',str(now),' lines:',str(lines))    
     # close database
+    cur.close()
     conn.close()
     

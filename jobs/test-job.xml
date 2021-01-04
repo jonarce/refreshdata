@@ -21,8 +21,23 @@
 		<password>Pass@word1</password>
 		<schema>suppliers</schema>
 		<table>hotels_agoda</table>
-		<timestamp>timestamp</timestamp>
+		<timestamp>tstz</timestamp>
 		<check-exists-sql>SELECT hotel_id FROM suppliers.hotels_agoda WHERE hotel_id = ${hotel_id};</check-exists-sql>
+		<insert-sql>INSERT INTO suppliers.hotels_agoda(hotel_id,chain_id,chain_name,brand_id,brand_name,hotel_name,hotel_formerly_name,hotel_translated_name,addressline1,
+		addressline2,zipcode,city,state,country,countryisocode,star_rating,longitude,latitude,url,checkin,checkout,numberrooms,numberfloors,yearopened,yearrenovated,photo1,
+		photo2,photo3,photo4,photo5,overview,rates_from,continent_id,continent_name,city_id,country_id,number_of_reviews,rating_average,rates_currency,rates_from_exclusive,accommodation_type, tstz)
+		VALUES (${hotel_id},${chain_id},'${chain_name}',${brand_id},'${brand_name}','${hotel_name}','${hotel_formerly_name}','${hotel_translated_name}','${addressline1}',
+		'${addressline2}','${zipcode}','${city}','${state}','${country}','${countryisocode}',${star_rating},${longitude},${latitude},'${url}','${checkin}','${checkout}',${numberrooms},${numberfloors},
+		${yearopened},${yearrenovated},'${photo1}','${photo2}','${photo3}','${photo4}','${photo5}','${overview}',${rates_from},${continent_id},'${continent_name}',
+		${city_id},${country_id},${number_of_reviews},${rating_average},'${rates_currency}',${rates_from_exclusive},'${accommodation_type}',to_timestamp('${tstz}','yyyy-mm-dd hh24:mi:ss'));</insert-sql>
+		<update-sql>UPDATE suppliers.hotels_agoda
+		SET hotel_id=${hotel_id},chain_id=${chain_id},chain_name='${chain_name}',brand_id=${brand_id},brand_name='${brand_name}',hotel_name='${hotel_name}',hotel_formerly_name='${hotel_formerly_name}',
+		hotel_translated_name='${hotel_translated_name}',addressline1='${addressline1}',addressline2='${addressline2}',zipcode='${zipcode}',city='${city}',state='${state}',country='${country}',
+		countryisocode='${countryisocode}',star_rating=${star_rating},longitude=${longitude},latitude=${latitude},url='${url}',checkin='${checkin}',checkout='${checkout}',numberrooms=${numberrooms},
+		numberfloors=${numberfloors},yearopened=${yearopened},yearrenovated=${yearrenovated},photo1='${photo1}',photo2='${photo2}',photo3='${photo3}',photo4='${photo4}',photo5='${photo5}',
+		overview='${overview}',rates_from=${rates_from},continent_id=${continent_id},continent_name='${continent_name}',city_id=${city_id},country_id=${country_id},number_of_reviews=${number_of_reviews},
+		rating_average=${rating_average},rates_currency='${rates_currency}',rates_from_exclusive=${rates_from_exclusive},accommodation_type='${accommodation_type}',tstz=to_timestamp('${tstz}','yyyy-mm-dd hh24:mi:ss') 
+		WHERE hotel_id = ${hotel_id};</update-sql>
 		<after-import-sql>SELECT * FROM suppliers.hotels_agoda;</after-import-sql>
 	</target>
-</job>
+</job> 
