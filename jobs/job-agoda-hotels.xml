@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?> 
 <job>
 	<common type="upload">
 		<job-name>Test Job</job-name>
@@ -38,6 +39,7 @@
 		overview='${overview}',rates_from=${rates_from},continent_id=${continent_id},continent_name='${continent_name}',city_id=${city_id},country_id=${country_id},number_of_reviews=${number_of_reviews},
 		rating_average=${rating_average},rates_currency='${rates_currency}',rates_from_exclusive=${rates_from_exclusive},accommodation_type='${accommodation_type}',tstz=to_timestamp('${tstz}','yyyy-mm-dd hh24:mi:ss') 
 		WHERE hotel_id = ${hotel_id};</update-sql>
-		<after-import-sql>SELECT * FROM suppliers.hotels_agoda;</after-import-sql>
+		<delete-old-sql>DELETE FROM suppliers.hotels_agoda WHERE tstz &lt; to_timestamp('${tstz}','yyyy-mm-dd hh24:mi:ss');</delete-old-sql>
+		<after-import-sql>update suppliers.hotels_agoda set geolocation = ST_GeogFromText('POINT(' || latitude || ' ' || longitude || ')');</after-import-sql>
 	</target>
 </job> 

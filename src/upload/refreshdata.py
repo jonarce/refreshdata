@@ -9,7 +9,7 @@ __author__      = "Jon Arce"
 __copyright_    = "Copyright 2020"
 __credits__     = ["Jon Arce"]
 __license__     = "Apache"
-__version__     = "1.0.1"
+__version__     = "1.0.2"
 __maintainer__  = "Jon Arce"
 __email__       = "jon.arce@gmail.com"
 __status__      = "Production"
@@ -19,11 +19,11 @@ __status__      = "Production"
 #
 
 import sys
-import os
+#import os
 import datetime
-from posix import getcwd
+#from posix import getcwd
 import xmltodict
-import xml.etree.ElementTree as xml
+#import xml.etree.ElementTree as xml
 import csv
 from string import Template
 # Database: Postgres
@@ -48,15 +48,15 @@ def empty(value):
         return False
     else:
         if not value:
-           return True
+            return True
         else:
-           return False
+            return False
 
 
 if __name__ == '__main__':
     now = datetime.datetime.now()
     lines = 0
-    print("Starting job ..." + str(now))
+    print("Starting job..." + str(now))
     # Print arguments one by one
     job_file = str(sys.argv[1])
     #check if job file exists
@@ -122,11 +122,11 @@ if __name__ == '__main__':
             
             # if record exists then UPDATE
             if (cur.rowcount):
-                print(' UPDATE ', end="")
+                print(' UPDATE...', end="")
                 sql_query = replace_vals(update_sql, data_row)
             # if new record then INSERT
             else:
-                print(' INSERT ', end="")
+                print(' INSERT...', end="")
                 sql_query = replace_vals(insert_sql, data_row)
             
             # print('SQL Query: ',sql_query)
@@ -136,11 +136,36 @@ if __name__ == '__main__':
             lines += 1
             print([(k, data_row[k]) for k in data_row])
             # input("Press Enter to continue...")
-            
+    
+    # delete old records / not touched by this batch 
+    delete_old_sql = job_doc['job']['target']['delete-old-sql']
+    if not empty(delete_old_sql):
+        print(' DELETE...', end="")
+        job_params = {}
+        # add timestamp to row of data
+        job_params[timestamp_field] = timestamp
+        sql_query = replace_vals(delete_old_sql, job_params)
+        print(sql_query)
+        cur.execute(sql_query)
+        conn.commit()
+    
+    # execute the after-import-sql 
+    after_import_sql = job_doc['job']['target']['after-import-sql']
+    if not empty(after_import_sql):
+        print(' AFTER IMPORT...', end="")
+        job_params = {}
+        # add timestamp to row of data
+        job_params[timestamp_field] = timestamp
+        sql_query = replace_vals(after_import_sql, job_params)
+        print(sql_query)
+        cur.execute(sql_query)
+        conn.commit()
+
     # print end of job
     now = datetime.datetime.now()
     print('   ending job...',str(now),' lines:',str(lines))    
     # close database
     cur.close()
     conn.close()
-    
+
+# EOF
