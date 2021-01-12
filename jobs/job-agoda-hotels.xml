@@ -23,6 +23,7 @@
 		<schema>suppliers</schema>
 		<table>hotels_agoda</table>
 		<timestamp>tstz</timestamp>
+		<before-import-sql>update suppliers.hotels_agoda ;</before-import-sql>
 		<check-exists-sql>SELECT hotel_id FROM suppliers.hotels_agoda WHERE hotel_id = ${hotel_id};</check-exists-sql>
 		<insert-sql>INSERT INTO suppliers.hotels_agoda(hotel_id,chain_id,chain_name,brand_id,brand_name,hotel_name,hotel_formerly_name,hotel_translated_name,addressline1,
 		addressline2,zipcode,city,state,country,countryisocode,star_rating,longitude,latitude,url,checkin,checkout,numberrooms,numberfloors,yearopened,yearrenovated,photo1,

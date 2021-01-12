@@ -19,7 +19,8 @@ __status__      = "Production"
 #
 
 import sys
-#import os
+import yaml
+import base64
 import datetime
 #from posix import getcwd
 import xmltodict
@@ -64,29 +65,29 @@ if __name__ == '__main__':
         f = open(job_file)
     # Do something with the file
     except FileNotFoundError:
-        print("ERROR: XML file not accessible")
+        print("ERROR: YAML file not accessible")
         sys.exit()
     finally:
         f.close()
     print ('Job file:',  job_file)
 
-    # read all XML parameters in a Dict.
-    with open(job_file) as fd:
-        job_doc = xmltodict.parse(fd.read())
+    # read all YAML parameters in a Dict.
+    with open(job_file) as f:   
+        job_doc = yaml.load(f, Loader=yaml.FullLoader)
     
     print('JOB NAME: ',job_doc['job']['common']['job-name'])
-    print('JOB TYPE: ',job_doc['job']['common']['@type'])
+    print('JOB TYPE: ',job_doc['job']['common']['mode'])
     print(job_doc)
 
     # Open source
-    if (job_doc['job']['source']['@type'] == 'file'):
+    if (job_doc['job']['source']['mode'] == 'file'):
         # open database connection
         check_exists_sql = job_doc['job']['target']['check-exists-sql']
         conn = psycopg2.connect(
-        host=job_doc['job']['target']['server'],
-        database=job_doc['job']['target']['database'],
-        user=job_doc['job']['target']['user'],
-        password=job_doc['job']['target']['password'])
+                host=job_doc['job']['target']['server'],
+                database=job_doc['job']['target']['database'],
+                user=str(base64.urlsafe_b64decode(job_doc['job']['target']['user']), "utf-8"),
+                password=str(base64.urlsafe_b64decode(job_doc['job']['target']['password']), "utf-8"))
         cur = conn.cursor()
         
         # file reader settings
@@ -109,6 +110,19 @@ if __name__ == '__main__':
         
         timestamp = datetime.datetime.now()
         timestamp_field = job_doc['job']['target']['timestamp']
+        
+        # delete old records / not touched by this batch 
+        before_import_sql = job_doc['job']['target']['before-import-sql']
+        if not empty(before_import_sql):
+            print(' BEFORE IMPORT...', end="")
+            job_params = {}
+            # add timestamp to row of data
+            job_params[timestamp_field] = timestamp
+            sql_query = replace_vals(before_import_sql, job_params)
+            print(sql_query)
+            cur.execute(sql_query)
+            conn.commit()
+        
         
         for data_row in source_reader:
             # add timestamp to row of data
@@ -167,5 +181,6 @@ if __name__ == '__main__':
     # close database
     cur.close()
     conn.close()
-
+    f.close()
+    
 # EOF
